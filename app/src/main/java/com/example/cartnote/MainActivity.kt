@@ -1,7 +1,7 @@
 package com.example.cartnote
 //CHECKLISTA EXAM 1 - G
-//[] 1. Projekt + publikt repo med .gitignore (utan build)
-//[] 2. Skapa datamodell: ShoppingItem + Section
+//[x] 1. Projekt + publikt repo med .gitignore (utan build)
+//[x] 2. Skapa datamodell: ShoppingItem + Section
 //[] 3. ShoppingViewModel med varulistan
 //[] 4. Material 3-tema, TopAppBar och LazyColumn
 //[] 5. Lägg till vara: fält "Vara" + rullgardin "Avdelning", tom text sparas inte
