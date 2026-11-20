@@ -27,6 +27,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cartnote.ui.theme.CartNoteTheme
+// För ikonen på ta bort-knappen
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+// För att centrera i raden och stryka över köpta varor
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextDecoration
 
 // Startpunkten för appen
 class MainActivity : ComponentActivity() {
@@ -74,7 +80,12 @@ fun CartNoteScreen(viewModel: ShoppingViewModel = viewModel()) {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(viewModel.items, key = { it.id }) { item ->
-                    Text("${item.name} – ${item.section.label}")
+                    // Varje vara visas som en egen rad. id:t ser till att bara den raden påverkas.
+                    ShoppingRow(
+                        item = item,
+                        onToggle = { viewModel.toggleBought(item.id) },
+                        onDelete = { viewModel.deleteItem(item.id) }
+                    )
                 }
             }
         }
@@ -156,6 +167,55 @@ fun AddItemSection(onAdd: (String, Section) -> Unit) {
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Lägg till")
+        }
+    }
+}
+
+// En rad i listan: checkbox, namn + avdelning och ta bort-knapp
+@Composable
+fun ShoppingRow(
+    item: ShoppingItem,
+    onToggle: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(4.dp)
+        ) {
+            // Bocka av eller ångra
+            Checkbox(
+                checked = item.isBought,
+                onCheckedChange = { onToggle() },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = MaterialTheme.colorScheme.secondary
+                )
+            )
+
+            // Namn och avdelning
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    // Stryk över varan när den är köpt
+                    textDecoration = if (item.isBought) TextDecoration.LineThrough else null
+                )
+                Text(
+                    text = item.section.label,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Ta bort raden
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, contentDescription = "Ta bort ${item.name}")
+            }
         }
     }
 }

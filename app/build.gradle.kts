@@ -41,6 +41,8 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     // Gör att skärmen kan hämta ShoppingViewModel med viewModel()
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    // Ikoner som papperskorgen
+    implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
