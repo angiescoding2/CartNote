@@ -5,7 +5,7 @@ package com.example.cartnote
 //[x] 3. ShoppingViewModel med varulistan
 //[x] 4. Material 3-tema, TopAppBar och LazyColumn
 //[x] 5. Lägg till vara: fält "Vara" + rullgardin "Avdelning", tom text sparas inte
-//[] 6. Bocka av och ta bort (bara vald rad)
+//[x] 6. Bocka av och ta bort (bara vald rad)
 //[] 7. Redigera vara i dialog
 //[] 8. Statistikrad "x av y köpta" + text för tom lista
 //[] 9. README: felsökning + reflektion kring hjälpmedel
@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// Appens huvudskärm
+// det vi ser på skärmen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartNoteScreen(viewModel: ShoppingViewModel = viewModel()) {
@@ -93,13 +93,11 @@ fun CartNoteScreen(viewModel: ShoppingViewModel = viewModel()) {
 }
 
 // Inmatning: fältet "Vara", rullgardinen "Avdelning" och knappen "Lägg till"
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddItemSection(onAdd: (String, Section) -> Unit) {
     // Det användaren skriver och väljer
     var name by remember { mutableStateOf("") }
     var section by remember { mutableStateOf(Section.FRUIT_VEG) }
-    var expanded by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.padding(top = 16.dp)) {
@@ -120,36 +118,12 @@ fun AddItemSection(onAdd: (String, Section) -> Unit) {
                 modifier = Modifier.weight(1f)
             )
 
-            // Rullgardinen "Avdelning"
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = it },
+            // Rullgardinen "Avdelning" (återanvänds i dialogen)
+            SectionDropdown(
+                selected = section,
+                onSelect = { section = it },
                 modifier = Modifier.weight(1f)
-            ) {
-                OutlinedTextField(
-                    value = section.label,
-                    onValueChange = {},
-                    readOnly = true,
-                    singleLine = true,
-                    label = { Text("Avdelning") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                    modifier = Modifier
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                        .fillMaxWidth()
-                )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    // En rad i menyn för varje avdelning
-                    Section.entries.forEach { option ->
-                        DropdownMenuItem(
-                            text = { Text(option.label) },
-                            onClick = { section = option; expanded = false }
-                        )
-                    }
-                }
-            }
+            )
         }
 
         Spacer(Modifier.height(8.dp))
@@ -215,6 +189,50 @@ fun ShoppingRow(
             // Ta bort raden
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = "Ta bort ${item.name}")
+            }
+        }
+    }
+}
+// Rullgardin för avdelning. Används både i "Lägg till" och i redigeringsdialogen.
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SectionDropdown(
+    selected: Section,
+    onSelect: (Section) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Om menyn är öppen eller stängd
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = selected.label,
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            label = { Text("Avdelning") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            modifier = Modifier
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                .fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            // En rad i menyn för varje avdelning
+            Section.entries.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option.label) },
+                    onClick = {
+                        onSelect(option)
+                        expanded = false
+                    }
+                )
             }
         }
     }
