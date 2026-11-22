@@ -35,6 +35,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextDecoration
 // Pennikonen på redigera-knappen
 import androidx.compose.material.icons.filled.Edit
+// Kundvagnsikonen i det tomma läget
+import androidx.compose.material.icons.filled.ShoppingCart
+// För att centrera texten i det tomma läget
+import androidx.compose.ui.text.style.TextAlign
 
 // Startpunkten för appen
 class MainActivity : ComponentActivity() {
@@ -89,6 +93,19 @@ fun CartNoteScreen(viewModel: ShoppingViewModel = viewModel()) {
             AddItemSection(onAdd = { name, section -> viewModel.addItem(name, section) })
 
             Spacer(Modifier.height(16.dp))
+
+            // Statistikrad: visas alltid, även "0 av 0 köpta"
+            StatsRow(
+                bought = viewModel.items.count { it.isBought },
+                total = viewModel.items.size
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            // Tomt läge: bara när det inte finns några varor
+            if (viewModel.items.isEmpty()) {
+                EmptyState()
+            }
 
             // Den rullande listan med varor (blir snyggare i steg 6)
             LazyColumn(
@@ -305,4 +322,56 @@ fun EditItemDialog(
             TextButton(onClick = onDismiss) { Text("Avbryt") }
         }
     )
+}
+
+// Statistikrad: hur många varor som är köpta, med en förloppsindikator
+@Composable
+fun StatsRow(bought: Int, total: Int) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Text(
+                text = "$bought av $total köpta",
+                style = MaterialTheme.typography.titleSmall
+            )
+            Spacer(Modifier.height(8.dp))
+            // Andel köpta från 0 till 1. Om listan är tom blir det 0, så vi slipper dela med noll.
+            LinearProgressIndicator(
+                progress = { if (total == 0) 0f else bought.toFloat() / total },
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+// Visas när inköpslistan är tom
+@Composable
+fun EmptyState() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 40.dp)
+    ) {
+        Icon(
+            Icons.Default.ShoppingCart,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.size(48.dp)
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "Din inköpslista är tom – lägg till en vara ovan",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
 }
