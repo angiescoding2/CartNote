@@ -6,7 +6,7 @@ package com.example.cartnote
 //[x] 4. Material 3-tema, TopAppBar och LazyColumn
 //[x] 5. Lägg till vara: fält "Vara" + rullgardin "Avdelning", tom text sparas inte
 //[x] 6. Bocka av och ta bort (bara vald rad)
-//[] 7. Redigera vara i dialog
+//[x] 7. Redigera vara i dialog
 //[] 8. Statistikrad "x av y köpta" + text för tom lista
 //[] 9. README: felsökning + reflektion kring hjälpmedel
 
@@ -33,6 +33,8 @@ import androidx.compose.material.icons.filled.Delete
 // För att centrera i raden och stryka över köpta varor
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextDecoration
+// Pennikonen på redigera-knappen
+import androidx.compose.material.icons.filled.Edit
 
 // Startpunkten för appen
 class MainActivity : ComponentActivity() {
@@ -51,6 +53,20 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartNoteScreen(viewModel: ShoppingViewModel = viewModel()) {
+    // Vilken vara som redigeras just nu (null = ingen dialog visas)
+    var editingItem by remember { mutableStateOf<ShoppingItem?>(null) }
+
+    // Visa dialogen när en vara är vald för redigering
+    editingItem?.let { item ->
+        EditItemDialog(
+            item = item,
+            onDismiss = { editingItem = null },
+            onSave = { name, section ->
+                viewModel.updateItem(item.id, name, section)
+                editingItem = null
+            }
+        )
+    }
     Scaffold(
         // Topplisten med appens namn
         topBar = {
@@ -84,6 +100,7 @@ fun CartNoteScreen(viewModel: ShoppingViewModel = viewModel()) {
                     ShoppingRow(
                         item = item,
                         onToggle = { viewModel.toggleBought(item.id) },
+                        onEdit = { editingItem = item },
                         onDelete = { viewModel.deleteItem(item.id) }
                     )
                 }
@@ -150,6 +167,7 @@ fun AddItemSection(onAdd: (String, Section) -> Unit) {
 fun ShoppingRow(
     item: ShoppingItem,
     onToggle: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
@@ -185,7 +203,10 @@ fun ShoppingRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
+            // Redigera raden
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Default.Edit, contentDescription = "Redigera ${item.name}")
+            }
             // Ta bort raden
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = "Ta bort ${item.name}")
@@ -236,4 +257,52 @@ fun SectionDropdown(
             }
         }
     }
+}
+
+// Dialogen "Redigera vara": samma fält och rullgardin som när man lägger till
+@Composable
+fun EditItemDialog(
+    item: ShoppingItem,
+    onDismiss: () -> Unit,
+    onSave: (String, Section) -> Unit
+) {
+    // Startar med varans nuvarande namn och avdelning
+    var name by remember { mutableStateOf(item.name) }
+    var section by remember { mutableStateOf(item.section) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Redigera vara") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Vara") },
+                    singleLine = true,
+                    isError = name.isBlank(),
+                    supportingText = if (name.isBlank()) {
+                        { Text("Namnet kan inte vara tomt") }
+                    } else null,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                // Samma rullgardin som i "Lägg till", återanvänd
+                SectionDropdown(
+                    selected = section,
+                    onSelect = { section = it },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        // Spara går bara att trycka på när namnet inte är tomt
+        confirmButton = {
+            TextButton(
+                onClick = { onSave(name, section) },
+                enabled = name.isNotBlank()
+            ) { Text("Spara") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Avbryt") }
+        }
+    )
 }
