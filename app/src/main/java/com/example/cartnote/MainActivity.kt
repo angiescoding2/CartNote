@@ -7,7 +7,7 @@ package com.example.cartnote
 //[x] 5. Lägg till vara: fält "Vara" + rullgardin "Avdelning", tom text sparas inte
 //[x] 6. Bocka av och ta bort (bara vald rad)
 //[x] 7. Redigera vara i dialog
-//[] 8. Statistikrad "x av y köpta" + text för tom lista
+//[x] 8. Statistikrad "x av y köpta" + text för tom lista
 //[] 9. README: felsökning + reflektion kring hjälpmedel
 
 //---VG---
