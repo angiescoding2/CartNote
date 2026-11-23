@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 // För den gula rutan bakom kundvagnen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.collectAsState
 
 // Startpunkten för appen
 class MainActivity : ComponentActivity() {
@@ -60,6 +61,8 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartNoteScreen(viewModel: ShoppingViewModel = viewModel()) {
+    // Skärmens tillstånd från ViewModel. Skärmen ritas om när det ändras.
+    val state by viewModel.uiState.collectAsState()
     // Vilken vara som redigeras just nu (null = ingen dialog visas)
     var editingItem by remember { mutableStateOf<ShoppingItem?>(null) }
 
@@ -119,14 +122,14 @@ fun CartNoteScreen(viewModel: ShoppingViewModel = viewModel()) {
 
             // Statistikrad: visas alltid, även "0 av 0 köpta"
             StatsRow(
-                bought = viewModel.items.count { it.isBought },
-                total = viewModel.items.size
+                bought = state.boughtCount,
+                total = state.totalCount
             )
 
             Spacer(Modifier.height(12.dp))
 
             // Tomt läge: bara när det inte finns några varor
-            if (viewModel.items.isEmpty()) {
+            if (state.isEmpty) {
                 EmptyState()
             }
 
@@ -135,7 +138,7 @@ fun CartNoteScreen(viewModel: ShoppingViewModel = viewModel()) {
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(viewModel.items, key = { it.id }) { item ->
+                items (state.items, key = { it.id }) { item ->
                     // Varje vara visas som en egen rad. id:t ser till att bara den raden påverkas.
                     ShoppingRow(
                         item = item,
