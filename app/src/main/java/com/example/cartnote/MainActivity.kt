@@ -8,7 +8,7 @@ package com.example.cartnote
 //[x] 6. Bocka av och ta bort (bara vald rad)
 //[x] 7. Redigera vara i dialog
 //[x] 8. Statistikrad "x av y köpta" + text för tom lista
-//[] 9. README: felsökning + reflektion kring hjälpmedel
+//[x] 9. README: felsökning + reflektion kring hjälpmedel
 
 //---VG---
 //[] 10. UiState + egna composables, filter och ångra borttagning
@@ -39,6 +39,9 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ShoppingCart
 // För att centrera texten i det tomma läget
 import androidx.compose.ui.text.style.TextAlign
+// För den gula rutan bakom kundvagnen
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 // Startpunkten för appen
 class MainActivity : ComponentActivity() {
@@ -75,6 +78,26 @@ fun CartNoteScreen(viewModel: ShoppingViewModel = viewModel()) {
         // Topplisten med appens namn
         topBar = {
             TopAppBar(
+                // Kundvagnsikonen bredvid appens namn, i en gul ruta
+                navigationIcon = {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .padding(start = 12.dp)
+                            .size(36.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                    ) {
+                        Icon(
+                            Icons.Default.ShoppingCart,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                },
                 title = { Text("CartNote") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -231,6 +254,7 @@ fun ShoppingRow(
         }
     }
 }
+
 // Rullgardin för avdelning. Används både i "Lägg till" och i redigeringsdialogen.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
