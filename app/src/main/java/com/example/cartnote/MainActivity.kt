@@ -11,7 +11,7 @@ package com.example.cartnote
 //[x] 9. README: felsökning + reflektion kring hjälpmedel
 
 //---VG---
-//[] 10. UiState + egna composables, filter och ångra borttagning
+//[x] 10. UiState + egna composables, filter och ångra borttagning
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -43,6 +43,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.collectAsState
+// Behövs för att visa snackbaren, som väntar på att användaren trycker
+import kotlinx.coroutines.launch
 
 // Startpunkten för appen
 class MainActivity : ComponentActivity() {
@@ -65,6 +67,9 @@ fun CartNoteScreen(viewModel: ShoppingViewModel = viewModel()) {
     val state by viewModel.uiState.collectAsState()
     // Vilken vara som redigeras just nu (null = ingen dialog visas)
     var editingItem by remember { mutableStateOf<ShoppingItem?>(null) }
+    // Snackbaren längst ner, och en "scope" som kan vänta på att den stängs
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     // Visa dialogen när en vara är vald för redigering
     editingItem?.let { item ->
@@ -78,6 +83,8 @@ fun CartNoteScreen(viewModel: ShoppingViewModel = viewModel()) {
         )
     }
     Scaffold(
+        // Plats för snackbaren längst ner på skärmen
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         // Topplisten med appens namn
         topBar = {
             TopAppBar(
@@ -128,9 +135,26 @@ fun CartNoteScreen(viewModel: ShoppingViewModel = viewModel()) {
 
             Spacer(Modifier.height(12.dp))
 
+            // Filter: Alla / Kvar / Köpta
+            FilterRow(
+                selected = state.filter,
+                onSelect = { viewModel.setFilter(it) }
+            )
+
+            Spacer(Modifier.height(8.dp))
+
             // Tomt läge: bara när det inte finns några varor
             if (state.isEmpty) {
                 EmptyState()
+            }
+
+            // Det finns varor, men inga som passar filtret
+            if (state.noMatches) {
+                Text(
+                    text = "Inga varor här just nu",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 24.dp)
+                )
             }
 
             // Den rullande listan med varor (blir snyggare i steg 6)
@@ -144,8 +168,22 @@ fun CartNoteScreen(viewModel: ShoppingViewModel = viewModel()) {
                         item = item,
                         onToggle = { viewModel.toggleBought(item.id) },
                         onEdit = { editingItem = item },
-                        onDelete = { viewModel.deleteItem(item.id) }
-                    )
+                        onDelete = {
+                            viewModel.deleteItem(item.id)
+                            scope.launch {
+                                // Stäng en eventuell gammal snackbar först
+                                snackbarHostState.currentSnackbarData?.dismiss()
+                                val result = snackbarHostState.showSnackbar(
+                                    message = "${item.name} borttagen",
+                                    actionLabel = "Ångra",
+                                    duration = SnackbarDuration.Short
+                                )
+                                // Användaren tryckte på "Ångra"
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    viewModel.undoDelete()
+                                }
+                            }
+                        })
                 }
             }
         }
@@ -400,5 +438,24 @@ fun EmptyState() {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
+    }
+}
+
+// Filterknappar: Alla, Kvar och Köpta
+@Composable
+fun FilterRow(selected: Filter, onSelect: (Filter) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // En knapp per filter, precis som rullgardinen gör en rad per avdelning
+        Filter.entries.forEach { option ->
+            FilterChip(
+                selected = option == selected,
+                onClick = { onSelect(option) },
+                label = { Text(option.label) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            )
+        }
     }
 }
